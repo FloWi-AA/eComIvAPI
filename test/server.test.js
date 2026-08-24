@@ -43,10 +43,20 @@ test('healthz is public and returns ok', async () => {
   assert.deepEqual(JSON.parse(response.body), { status: 'ok' });
 });
 
+test('legacy checkConnectivity endpoint is public and returns 204', async () => {
+  const response = await request('/v1/invoices/checkConnectivity', { auth: false });
+  assert.equal(response.status, 204);
+});
+
 test('API rejects missing credentials', async () => {
   const response = await request('/bei/SSP/invoice/v1/invoices/health', { auth: false });
   assert.equal(response.status, 401);
   assert.match(response.headers['www-authenticate'], /Basic/);
+});
+
+test('scoped checkConnectivity endpoint requires auth and returns 204', async () => {
+  const response = await request('/bei/SSP/invoice/v1/invoices/checkConnectivity');
+  assert.equal(response.status, 204);
 });
 
 test('valid invoice can be reported as PDF', async () => {

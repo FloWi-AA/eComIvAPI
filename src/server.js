@@ -44,7 +44,11 @@ app.use('/test/summary', basicAuth);
 
 app.use('/bei/SSP/invoice', express.json({ limit: maxJsonBytes, type: 'application/json' }));
 
+// Compatibility endpoint used by external test systems.
+app.get('/v1/invoices/checkConnectivity', (_request, response) => response.sendStatus(204));
+
 app.get('/bei/SSP/invoice/v1/invoices/health', (_request, response) => response.sendStatus(204));
+app.get('/bei/SSP/invoice/v1/invoices/checkConnectivity', (_request, response) => response.sendStatus(204));
 app.get('/bei/SSP/invoice/v1/vat/regex', (_request, response) => response.json(VAT_REGEX.source));
 app.get('/bei/SSP/invoice/v1/vat/validate', (request, response) => {
   const vatNumber = request.query.vatNumber;
