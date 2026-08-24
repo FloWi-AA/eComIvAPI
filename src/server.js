@@ -12,6 +12,9 @@ const maxPdfBytes = 10 * 1024 * 1024;
 
 app.disable('x-powered-by');
 
+// The external test system uses this unauthenticated connectivity probe.
+app.get('/v1/invoices/checkConnectivity', (_request, response) => response.sendStatus(204));
+
 function basicAuth(request, response, next) {
   const header = request.get('authorization') || '';
   const [scheme, encoded] = header.split(' ');
@@ -40,17 +43,25 @@ app.get('/healthz', (_request, response) => response.status(200).json({ status: 
 
 app.use('/bei/SSP/invoice', basicAuth);
 app.use('/bei/SSP/invoicereport', basicAuth);
+app.use('/v1', basicAuth);
 app.use('/test/summary', basicAuth);
 
 app.use('/bei/SSP/invoice', express.json({ limit: maxJsonBytes, type: 'application/json' }));
-
-// Compatibility endpoint used by external test systems.
-app.get('/v1/invoices/checkConnectivity', (_request, response) => response.sendStatus(204));
+app.use('/v1', express.json({ limit: maxJsonBytes, type: 'application/json' }));
 
 app.get('/bei/SSP/invoice/v1/invoices/health', (_request, response) => response.sendStatus(204));
 app.get('/bei/SSP/invoice/v1/invoices/checkConnectivity', (_request, response) => response.sendStatus(204));
+app.get('/v1/invoices/health', (_request, response) => response.sendStatus(204));
 app.get('/bei/SSP/invoice/v1/vat/regex', (_request, response) => response.json(VAT_REGEX.source));
+app.get('/v1/vat/regex', (_request, response) => response.json(VAT_REGEX.source));
 app.get('/bei/SSP/invoice/v1/vat/validate', (request, response) => {
+  const vatNumber = request.query.vatNumber;
+  if (typeof vatNumber !== 'string' || !VAT_REGEX.test(vatNumber)) {
+    return response.status(400).json(errorResponse(7, 'vatNumber is invalid.'));
+  }
+  return response.sendStatus(204);
+});
+app.get('/v1/vat/validate', (request, response) => {
   const vatNumber = request.query.vatNumber;
   if (typeof vatNumber !== 'string' || !VAT_REGEX.test(vatNumber)) {
     return response.status(400).json(errorResponse(7, 'vatNumber is invalid.'));
@@ -63,9 +74,25 @@ app.post('/bei/SSP/invoice/v1/invoices/invoice', (request, response) => {
   const record = addInvoice(request.body);
   return response.status(201).json(record.id);
 });
+app.post('/v1/invoices/invoice', (request, response) => {
+  const validationError = validateInvoice(request.body);
+  if (validationError) return sendValidationError(response, validationError);
+  const record = addInvoice(request.body);
+  return response.status(201).json(record.id);
+});
 
 app.get('/bei/SSP/invoicereport/v1/invoicereports/health', (_request, response) => response.sendStatus(204));
+app.get('/v1/invoicereports/health', (_request, response) => response.sendStatus(204));
 app.post('/bei/SSP/invoicereport/v1/invoicereports/invoice/:externalInvoiceId/reportpdf', express.raw({ type: 'application/pdf', limit: maxPdfBytes }), (request, response) => {
+  if (!request.is('application/pdf') || !Buffer.isBuffer(request.body) || request.body.length === 0) {
+    return response.status(400).json(errorResponse(6, 'A non-empty application/pdf body is required.'));
+  }
+  const { externalInvoiceId } = request.params;
+  if (!hasInvoice(externalInvoiceId)) return response.sendStatus(404);
+  addReport(externalInvoiceId, request.body.length);
+  return response.sendStatus(201);
+});
+app.post('/v1/invoicereports/invoice/:externalInvoiceId/reportpdf', express.raw({ type: 'application/pdf', limit: maxPdfBytes }), (request, response) => {
   if (!request.is('application/pdf') || !Buffer.isBuffer(request.body) || request.body.length === 0) {
     return response.status(400).json(errorResponse(6, 'A non-empty application/pdf body is required.'));
   }

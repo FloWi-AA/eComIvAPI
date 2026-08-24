@@ -59,6 +59,16 @@ test('scoped checkConnectivity endpoint requires auth and returns 204', async ()
   assert.equal(response.status, 204);
 });
 
+test('unscoped invoice endpoint accepts the external test system path', async () => {
+  const invoice = JSON.stringify({ invoiceLines: [{ productName: 'Alias test', quantity: 1 }] });
+  const response = await request('/v1/invoices/invoice', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(invoice) },
+    body: invoice,
+  });
+  assert.equal(response.status, 201);
+});
+
 test('valid invoice can be reported as PDF', async () => {
   const invoice = JSON.stringify({
     invoiceNumber: 'TEST-001',
