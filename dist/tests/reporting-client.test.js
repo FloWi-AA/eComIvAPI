@@ -1,0 +1,17 @@
+import { describe, expect, it, vi } from "vitest";
+import { ReportingClient } from "../src/services/reporting-client.js";
+describe("ReportingClient", () => {
+    it("does not classify 404 as retryable", async () => {
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 404 })));
+        const result = await new ReportingClient({ baseUrl: "https://example.test", username: "u", password: "p" }).reportPdf("id", new Uint8Array([1]));
+        expect(result).toEqual({ kind: "not-found" });
+        vi.unstubAllGlobals();
+    });
+    it("classifies server failures as retryable", async () => {
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 500 })));
+        const result = await new ReportingClient({ baseUrl: "https://example.test", username: "u", password: "p" }).reportPdf("id", new Uint8Array([1]));
+        expect(result).toEqual({ kind: "retryable", status: 500 });
+        vi.unstubAllGlobals();
+    });
+});
+//# sourceMappingURL=reporting-client.test.js.map

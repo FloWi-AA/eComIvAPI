@@ -1,0 +1,1 @@
+{"version":3,"file":"invoice-generator.js","sourceRoot":"","sources":["../../../src/services/invoice-generator.ts"],"names":[],"mappings":"AAMA,MAAM,OAAO,4BAA4B;IAChC,KAAK,CAAC,QAAQ,CAAC,QAAiB;QACrC,MAAM,IAAI,KAAK,CAAC,yCAAyC,CAAC,CAAC;IAC7D,CAAC;CACF"}
