@@ -60,6 +60,15 @@ export function buildServer() {
                 return reply.code(500).type("application/json").send("Failure");
             }
         });
+        scope.get(`${prefix}/v1/invoices/checkConnectivity`, async (_request, reply) => {
+            try {
+                await inbox.isReady();
+                return reply.code(204).send();
+            }
+            catch {
+                return reply.code(500).type("application/json").send("Failure");
+            }
+        });
     });
     app.addHook("onClose", async () => {
         await pool.end();

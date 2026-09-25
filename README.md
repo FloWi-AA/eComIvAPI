@@ -17,9 +17,17 @@ INVOICEREPORT_BASE_URL
 
 Use [render.env.example](render.env.example) as the bulk-import template. Enter the Internal Database URL from Render Postgres for `DATABASE_URL`; do not commit a filled-in copy.
 
+### Required Render database binding
+
+In Render, open the **Web Service** (not the Postgres instance), choose **Environment**, and add `DATABASE_URL` as a secret. Use **Add from Database** and select `InvoiceDatabase`, or paste its **Internal Database URL**. Save the setting and manually redeploy the Web Service. `DATABASE_URL` must be visible in the Web Service environment; creating a database alone does not automatically expose it to a service.
+
+The service intentionally stops at startup when this variable is absent, because accepting invoices without durable storage would violate the idempotency requirement.
+
 SKIDATA authenticates to every `/v1/...` endpoint with `SKIDATA_BASIC_AUTH_USER` and `SKIDATA_BASIC_AUTH_PASSWORD`. The service uses the `INVOICEREPORT_*` pair only when uploading a generated PDF to SKIDATA.
 
 `GET /healthz` is intentionally public for Render. All `/v1/...` routes require Basic Auth.
+
+The protected connectivity aliases `GET /v1/invoices/health` and `GET /v1/invoices/checkConnectivity` both return `204` when PostgreSQL is reachable.
 
 ## Render configuration
 
