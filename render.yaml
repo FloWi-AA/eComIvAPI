@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: skidata-invoice-api
+    runtime: node
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: BASE_PATH
+        value: ""
+      - key: VAT_REGEX
+        value: "^[0-9]{9}$"
+      - key: DATABASE_URL
+        sync: false
+      - key: SKIDATA_BASIC_AUTH_USER
+        sync: false
+      - key: SKIDATA_BASIC_AUTH_PASSWORD
+        sync: false
+      - key: INVOICEREPORT_BASE_URL
+        sync: false
+      - key: INVOICEREPORT_AUTH_USER
+        sync: false
+      - key: INVOICEREPORT_AUTH_PASSWORD
+        sync: false

@@ -1,46 +1,33 @@
-# eCom Invoice Test Endpoint
+# SKIDATA eCom Invoice Endpoint
 
-Render-ready test service for the Invoice and Invoice Reporting APIs in `Kontext/api/invoice/v1`.
+Render deployment for the SKIDATA Invoice API. Inbound invoices are protected by HTTP Basic Auth, persisted in PostgreSQL, converted to PDF asynchronously, and reported to SKIDATA using a separate Basic-Auth credential pair.
 
-## Local run
+## Authentication
 
-```powershell
-npm install
-$env:TEST_USERNAME = 'test-client'
-$env:TEST_PASSWORD = 'use-a-long-random-password'
-npm start
+Set these Render secret environment variables:
+
+```text
+SKIDATA_BASIC_AUTH_USER
+SKIDATA_BASIC_AUTH_PASSWORD
+INVOICEREPORT_AUTH_USER
+INVOICEREPORT_AUTH_PASSWORD
+DATABASE_URL
+INVOICEREPORT_BASE_URL
 ```
 
-The service listens on `http://localhost:10000` by default. Render supplies `PORT` automatically.
+Use [render.env.example](render.env.example) as the bulk-import template. Enter the Internal Database URL from Render Postgres for `DATABASE_URL`; do not commit a filled-in copy.
 
-## Endpoints
+SKIDATA authenticates to every `/v1/...` endpoint with `SKIDATA_BASIC_AUTH_USER` and `SKIDATA_BASIC_AUTH_PASSWORD`. The service uses the `INVOICEREPORT_*` pair only when uploading a generated PDF to SKIDATA.
 
-All API-compatible endpoints use HTTP Basic Auth:
+`GET /healthz` is intentionally public for Render. All `/v1/...` routes require Basic Auth.
 
-- `GET /healthz` - public Render health check
-- `GET /bei/SSP/invoice/v1/invoices/health`
-- `GET /bei/SSP/invoice/v1/vat/regex`
-- `GET /bei/SSP/invoice/v1/vat/validate?vatNumber=123456789`
-- `POST /bei/SSP/invoice/v1/invoices/invoice`
-- `GET /bei/SSP/invoicereport/v1/invoicereports/health`
-- `POST /bei/SSP/invoicereport/v1/invoicereports/invoice/{externalInvoiceId}/reportpdf`
-- `GET /test/summary` - protected test evaluation
-
-Invoice data must contain at least one `invoiceLines` item. Valid invoices receive a generated UUID with status `201`. A PDF report is accepted only for a UUID created by this service.
-
-## Render Free Tier
-
-Create a Render Web Service from this directory or repository:
+## Render configuration
 
 - Build command: `npm ci`
 - Start command: `npm start`
 - Health check path: `/healthz`
-- Environment variables: `TEST_USERNAME`, `TEST_PASSWORD`
+- Node.js: 20 or later
 
-Render provides HTTPS and a public URL. The Free Tier may sleep and its local memory is ephemeral. This service intentionally keeps test data in memory; invoices and reports disappear after a restart or redeploy. Use test data only, never production credentials, invoices, or personal data.
+`npm start` applies the database migration before starting the Fastify server and the durable PDF/reporting worker.
 
-## Test
-
-```powershell
-npm test
-```
+Use `BASE_PATH` only if SKIDATA requires a prefix such as `/bei/SSP/invoice`; it defaults to an empty string.
