@@ -23,6 +23,16 @@ export function buildServer() {
             return reply.code(503).type("text/plain").send("Service unavailable");
         }
     });
+    // SKIDATA's connectivity probe does not send HTTP Basic Auth credentials.
+    app.get(`${prefix}/v1/invoices/checkConnectivity`, async (_request, reply) => {
+        try {
+            await inbox.isReady();
+            return reply.code(204).send();
+        }
+        catch {
+            return reply.code(500).type("application/json").send("Failure");
+        }
+    });
     app.register(async (scope) => {
         scope.addHook("preHandler", basicAuth(config.skidataAuthUser, config.skidataAuthPassword));
         scope.post(`${prefix}/v1/invoices/invoice`, async (request, reply) => {
@@ -52,15 +62,6 @@ export function buildServer() {
             return reply.code(204).send();
         });
         scope.get(`${prefix}/v1/invoices/health`, async (_request, reply) => {
-            try {
-                await inbox.isReady();
-                return reply.code(204).send();
-            }
-            catch {
-                return reply.code(500).type("application/json").send("Failure");
-            }
-        });
-        scope.get(`${prefix}/v1/invoices/checkConnectivity`, async (_request, reply) => {
             try {
                 await inbox.isReady();
                 return reply.code(204).send();

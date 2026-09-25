@@ -25,9 +25,9 @@ The service intentionally stops at startup when this variable is absent, because
 
 SKIDATA authenticates to every `/v1/...` endpoint with `SKIDATA_BASIC_AUTH_USER` and `SKIDATA_BASIC_AUTH_PASSWORD`. The service uses the `INVOICEREPORT_*` pair only when uploading a generated PDF to SKIDATA.
 
-`GET /healthz` is intentionally public for Render. All `/v1/...` routes require Basic Auth.
+`GET /healthz` is intentionally public for Render. `GET /v1/invoices/checkConnectivity` is also public because SKIDATA's connectivity probe does not send Basic Auth. All other `/v1/...` routes require Basic Auth.
 
-The protected connectivity aliases `GET /v1/invoices/health` and `GET /v1/invoices/checkConnectivity` both return `204` when PostgreSQL is reachable.
+`GET /v1/invoices/health` requires Basic Auth. Both connectivity endpoints return `204` when PostgreSQL is reachable.
 
 ## Render configuration
 
